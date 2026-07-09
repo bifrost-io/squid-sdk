@@ -103,7 +103,10 @@ export class BlockParser {
             let extrinsic_id: string | undefined
             if (rec.phase.__kind == "ApplyExtrinsic") {
                 extrinsicIdx = rec.phase.value
-                extrinsic_id = formatId(this.raw.blockHeight, this.raw.blockHash, extrinsicIdx)
+                let hasExtrinsic = extrinsicIdx < this.raw.block.extrinsics.length
+                if (hasExtrinsic && !name.startsWith('MultiBlockMigrations.')) {
+                    extrinsic_id = formatId(this.raw.blockHeight, this.raw.blockHash, extrinsicIdx)
+                }
             }
             return {
                 id: formatId(this.raw.blockHeight, this.raw.blockHash, idx),

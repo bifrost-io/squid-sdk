@@ -401,9 +401,21 @@ export class CallParser {
                     event.pos = this.takePos()
                     this.eix -= 1
                     return event
-                } else {
+                }
+                if (event.extrinsic_id != null) {
+                    let idx = parseInt(event.extrinsic_id.slice(11, 17), 10)
+                    if (idx > this.extrinsic.index_in_block) {
+                        // MultiBlockMigrations and similar: events may reference a higher
+                        // extrinsic index that does not exist in the block body.
+                        this.eix -= 1
+                        continue
+                    }
                     return undefined
                 }
+                // ApplyExtrinsic without extrinsic_id (e.g. MultiBlockMigrations)
+                event.pos = this.takePos()
+                this.eix -= 1
+                continue
             } else {
                 event.pos = this.takePos()
                 this.eix -= 1
