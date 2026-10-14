@@ -1,19 +1,33 @@
 name: test e2e
 on: [pull_request, workflow_dispatch]
+permissions:
+  contents: read
 
 jobs:
   test:
     name: run e2e tests
-    if: "!contains(github.event.head_commit.message, 'test skip')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Check impact selector
+        run: python3 .github/scripts/test_ci_impact.py
+      - name: Select checks
+        id: impact
+        run: python3 .github/scripts/ci-impact.py >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
+        if: steps.impact.outputs.mode == 'full'
         run: node common/scripts/install-run-rush.js install
 
       - name: Build project
+        if: steps.impact.outputs.mode == 'full'
         run: node common/scripts/install-run-rush.js build
 
       - name: Run tests
+        if: steps.impact.outputs.mode == 'full'
         run: test/e2e-suite/e2e.sh
+      - name: Record documentation-only decision
+        if: steps.impact.outputs.mode == 'none'
+        run: echo 'No code or test input changed.'
